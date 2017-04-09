@@ -6,6 +6,13 @@ on a ttk canvas
 Created on Fri Apr  7 11:39:32 2017
 
 @author: tpwin10
+
+possible improvements:
+    -create object that contains image, with order index and movement as
+        properties
+    -set constant variables for movement switches instead of being hard coded
+    -make triangles even so mevments can be the same for each direction
+    -fix where the buttons are
 """
 
 from tkinter import *
@@ -19,7 +26,7 @@ Set up for the gui. can be ignored
 
 class BridgeSim(ttk.Frame):
    
-    def __init__(self, parent=None, msecs=2000, **args):
+    def __init__(self, parent=None, msecs=20, **args):
         #creates the frame which actually holds all of the widgets
         ttk.Frame.__init__(self, parent)
         self.grid()
@@ -32,25 +39,26 @@ class BridgeSim(ttk.Frame):
         #self.grid()
         #sets class variable for the speed that can be used by any method
         self.msecs = msecs
-        self.images = []
-        self.object = None
+        self.objects = []
         self.moveUp = (0, -2)
         self.moveDown = (0, 2)
         self.moveLeft = (-2, 0)
         self.moveRight = (2, 0)
         self.moveUpLeft = (-2, -.90)
-        self.moveUpRight = (2, -.90)
-        self.moveDownLeft = (-2, 1.15)
+        self.moveUpRight = (2, -1.15)
+        self.moveDownLeft = (-2, .90)
         self.moveDownRight = (2, 1.05)
         #importing images into python
         ball1Image = PhotoImage(file='ball1.gif')
         bridgeImage = PhotoImage(file='bridge.gif')
         ball2Image = PhotoImage(file='ball2.gif')
         
+        #needed so that images arent garbage collected (? stupid)
         canvas.background = bridgeImage
         canvas.b = ball1Image
         canvas.bb = ball2Image
         
+        ####Pixel boundary estimates
         #bottom border y = 155
         #top boarder y = 50
         
@@ -61,109 +69,398 @@ class BridgeSim(ttk.Frame):
         #left side x = 35
         #right side x = 357
         
-        
+        #places images on canvas
         self.bridgeOb = canvas.create_image(200,100, image=bridgeImage)
-        self.ball11Ob = canvas.create_image(35,90, image=ball1Image)
-        self.ball12Ob = canvas.create_image(357,90, image=ball2Image)
-        self.ball21Ob = canvas.create_image(35,115, image=ball1Image)
+        self.ball11Ob = canvas.create_image(35,89, image=ball1Image)
+        self.ball12Ob = canvas.create_image(35,115, image=ball1Image)
+        self.ball21Ob = canvas.create_image(357,89, image=ball2Image)
         self.ball22Ob = canvas.create_image(357,115, image=ball2Image)
-        self.testball = canvas.create_image(357, 50, image=ball1Image)
+        #put objects on canvas into a list
+        self.objects = [self.ball11Ob, self.ball12Ob, self.ball21Ob, self.ball22Ob]
+        #keeps track of direction and images crossing bridge
+        self.leftOnBridge = []
+        self.rightOnBridge = []
+        self.waitingRight = []
+        self.waitingLeft = []
+        
+        #list to keep  track of movement order on the chart
+        self.order = [self.moveUp, self.moveDownRight, self.moveRight, self.moveUpRight, self.moveDown, self.moveUpLeft, self.moveLeft, self.moveDownLeft]
+        
+        #sets starting movement indecies
+        self.ball11ObIND = 0
+        self.ball12ObIND = 0
+        self.ball21ObIND = 4
+        self.ball22ObIND = 4
+        
+        
+        #sets actually movements using indecies
+        self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+        self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+        self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+        self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+        
         #puts the widgets on to the canvas
         self.makeWidgets()
 
         
     def makeWidgets(self):
-      
-        #first line creates "label" item (basically the picture holder
-        #second line sets its location in the grid (col=2, row=2)
-        #third line sets the 'image' property to previously imported image
-        #self.images.append(self.bridgeImage)
-        #print(self.bridgeImage)
-        #self.object = self.canvas.create_image(200, 100, image=self.bridgeImage)
-        #self.canvas.create_oval(100,100, 200,200)
-        #self.canvas.update()
-        print(self.object)
-        
-#        self.bridge = ttk.Label(self)
-#        self.bridge.grid(column=2, row=2)
-#        self.bridge['image'] = self.bridgeImage
-#        
-#                   
-#        
-#        self.canvas.create_image(50,50, image=self.bridgeImage)
-#                  
-#        set up for each individual block
-#        first two are commented to explain. The rest are exactly the same
-#        
-#            
-#        self.channelTop1 = ttk.Label(self)
-#        sticky=W means that the picture will go to the "West" (left) side of the label object(aka the square in the grid)
-#        self.channelTop1.grid(column=2, row=1, sticky=(W))
-#        self.channelTop1['image'] = self.ball1Image
-#        
-#        self.channelTop2 = ttk.Label(self)
-#        self.channelTop2.grid(column=2, row=1, sticky=(E))
-#        self.channelTop2['image'] = self.ball1Image
-#        
-#        self.channelBottom2 = ttk.Label(self)
-#        self.channelBottom2.grid(column=2, row=3, sticky=(E))
-#        self.channelBottom2['image'] = self.ball2Image           
-#                   
-#        self.channelBottom1 = ttk.Label(self)
-#        self.channelBottom1.grid(column=2, row=3, sticky=(W))
-#        self.channelBottom1['image'] = self.ball2Image              
-#                      
-#        self.sideB1 = ttk.Label(self)
-#        self.sideB1.grid(column=3, row=2, sticky=(N))
-#        self.sideB1['image'] = self.ball1Image
-#             
-#        self.sideA1 = ttk.Label(self)
-#        self.sideA1.grid(column=1, row=2, sticky=(N))
-#        self.sideA1['image'] = self.ball2Image
-#              
-#        self.sideB2 = ttk.Label(self)
-#        self.sideB2.grid(column=3, row=2, sticky=(S))
-#        self.sideB2['image'] = self.ball1Image
-#             
-#        self.sideA2 = ttk.Label(self)
-#        self.sideA2.grid(column=1, row=2, sticky=(S))
-#        self.sideA2['image'] = self.ball2Image   
-#        
         #creates button to stop and start the simulation
         self.onoff = Button(self, text='Start', command=self.onStart)   
         self.onoff.grid(column=1, row=3)   
         
         #creates the slider that is not used yet
         #note that the .grid at the end places it onto the GUI
-        self.s = ttk.Scale(self, command=self.onScale,orient=HORIZONTAL, length=200, from_=0, to=3000).grid(column=1,row=2)
+        self.s = ttk.Scale(self, command=self.onScale,orient=HORIZONTAL, length=200, from_=1, to=300).grid(column=1,row=2)
         
-#        self.order = [self.channelTop1, self.channelTop2, self.sideB1, self.sideB2, self.channelBottom2, self.channelBottom1, self.sideA2, self.sideA1]
-             
-#        #makes padding between each element. Can be ignored
-#        for child in self.winfo_children(): child.grid_configure(padx=5, pady=5)
-    
+    #Starts simulation
     def onStart(self):
         self.loop = 1
         self.onoff.config(text='Stop', command=self.onStop)
         self.onTimer()
-    
+    #stops simulation
     def onStop(self):
         self.loop = 0
         self.onoff.config(text='Start', command=self.onStart)
-        
+    
+    #if simulation is running, animates 
     def onTimer(self):
         if self.loop:
             self.drawNext()
             self.after(self.msecs, self.onTimer)
+    
+    #checks the location of objects and changes directions accordingly
+    #also makes sure that images are going the same way on the bridge
+    def checkMoves2Bridge(self):
+        for currentObj in self.objects:
+            #print('left', self.leftOnBridge)
+            #print('right', self.rightOnBridge)
             
+            #each section checks if the image is at a turning point then updates the direction index and movement var
+            if self.canvas.coords(currentObj)[0] == 35 and self.canvas.coords(currentObj)[1] == 55:
+                self.canvas.move(currentObj, 0, -3)
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+            
+            if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 141:
+                   
+                if len(self.leftOnBridge) < 1:
+                    self.rightOnBridge.append(currentObj)
+                    
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObIND += 1
+                        self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObIND += 1
+                        self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObIND += 1
+                        self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObIND += 1
+                        self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                else:
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObcurrentMove = (0,0)
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObcurrentMove = (0,0)
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObcurrentMove = (0,0)
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObcurrentMove = (0,0)
+                
+            if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 257:
+                self.rightOnBridge.remove(currentObj)
+                
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+                
+            if self.canvas.coords(currentObj)[1] - 50 < .2 and self.canvas.coords(currentObj)[1] - 50 > 0 and self.canvas.coords(currentObj)[0] == 357:
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                    
+            if self.canvas.coords(currentObj)[1] == 155 and self.canvas.coords(currentObj)[0] == 357:
+                self.canvas.move(currentObj, 0, 1.14999999999966)
+                
+            if self.canvas.coords(currentObj)[1] - 156 < .2 and self.canvas.coords(currentObj)[1] - 156 > 0 and self.canvas.coords(currentObj)[0] == 357:
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+            if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 257:
+
+                if len(self.rightOnBridge) < 1:
+                    self.leftOnBridge.append(currentObj)
+                    
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObIND += 1
+                        self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObIND += 1
+                        self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObIND += 1
+                        self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObIND += 1
+                        self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                else:
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObcurrentMove = (0,0)
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObcurrentMove = (0,0)
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObcurrentMove = (0,0)
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObcurrentMove = (0,0)
+                        
+            if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 141:
+                self.leftOnBridge.remove(currentObj)
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+            if self.canvas.coords(currentObj)[1] - 159 > -.2 and self.canvas.coords(currentObj)[1] - 159 < 0 and self.canvas.coords(currentObj)[0] == 35:
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND = 0
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND = 0
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND = 0
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND = 0
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+            if self.canvas.coords(currentObj)[1] - 61 > -.2 and self.canvas.coords(currentObj)[1] - 61 < 0 and self.canvas.coords(currentObj)[0] == 35:
+                self.canvas.move(currentObj, 0, -1.84999999999968)
+
+    def checkMoves(self):
+        for currentObj in self.objects:
+            #print('left', self.leftOnBridge)
+            #print('right', self.rightOnBridge)
+            
+            if self.canvas.coords(currentObj)[0] == 35 and self.canvas.coords(currentObj)[1] == 55:
+                self.canvas.move(currentObj, 0, -3)
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+            
+            if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 141:
+
+                    
+                if len(self.rightOnBridge) + len(self.leftOnBridge) < 1:
+                    if self.rightOnBridge.__contains__(currentObj):
+                        print("wait")
+                    else:
+                        self.rightOnBridge.append(currentObj)
+                    
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObIND += 1
+                        self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObIND += 1
+                        self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObIND += 1
+                        self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObIND += 1
+                        self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                else:
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObcurrentMove = (0,0)
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObcurrentMove = (0,0)
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObcurrentMove = (0,0)
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObcurrentMove = (0,0)
+                
+            if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 257:
+                self.rightOnBridge.remove(currentObj)
+                
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+                
+            if self.canvas.coords(currentObj)[1] - 50 < .2 and self.canvas.coords(currentObj)[1] - 50 > 0 and self.canvas.coords(currentObj)[0] == 357:
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                    
+            if self.canvas.coords(currentObj)[1] == 155 and self.canvas.coords(currentObj)[0] == 357:
+                self.canvas.move(currentObj, 0, 1.14999999999966)
+                
+            if self.canvas.coords(currentObj)[1] - 156 < .2 and self.canvas.coords(currentObj)[1] - 156 > 0 and self.canvas.coords(currentObj)[0] == 357:
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+            if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 257:
+
+                if len(self.leftOnBridge) + len(self.rightOnBridge) < 1:
+                    if self.leftOnBridge.__contains__(currentObj):
+                        print("wait")
+                    else:
+                        self.leftOnBridge.append(currentObj)
+                    
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObIND += 1
+                        self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObIND += 1
+                        self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObIND += 1
+                        self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObIND += 1
+                        self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                else:
+                    if currentObj == self.ball11Ob:
+                        self.ball11ObcurrentMove = (0,0)
+                    elif currentObj == self.ball12Ob:
+                        self.ball12ObcurrentMove = (0,0)
+                    elif currentObj == self.ball21Ob:
+                        self.ball21ObcurrentMove = (0,0)
+                    elif currentObj == self.ball22Ob:
+                        self.ball22ObcurrentMove = (0,0)
+                        
+            if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 141:
+                self.leftOnBridge.remove(currentObj)
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND += 1
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND += 1
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND += 1
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND += 1
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+            if self.canvas.coords(currentObj)[1] - 159 > -.2 and self.canvas.coords(currentObj)[1] - 159 < 0 and self.canvas.coords(currentObj)[0] == 35:
+                if currentObj == self.ball11Ob:
+                    self.ball11ObIND = 0
+                    self.ball11ObcurrentMove = self.order[self.ball11ObIND]
+                elif currentObj == self.ball12Ob:
+                    self.ball12ObIND = 0
+                    self.ball12ObcurrentMove = self.order[self.ball12ObIND]
+                elif currentObj == self.ball21Ob:
+                    self.ball21ObIND = 0
+                    self.ball21ObcurrentMove = self.order[self.ball21ObIND]
+                elif currentObj == self.ball22Ob:
+                    self.ball22ObIND = 0
+                    self.ball22ObcurrentMove = self.order[self.ball22ObIND]
+                
+            if self.canvas.coords(currentObj)[1] - 61 > -.2 and self.canvas.coords(currentObj)[1] - 61 < 0 and self.canvas.coords(currentObj)[0] == 35:
+                self.canvas.move(currentObj, 0, -1.84999999999968)
+
+    #called by timer repeatedly
     def drawNext(self):
+        #regular 1 at a time checker
+        #self.checkMoves()
         
-        self.canvas.move(self.ball11Ob, self.moveDown[0], self.moveDown[1])
-        self.canvas.move(self.ball12Ob, 1, 1)
-        self.canvas.move(self.ball21Ob, 1, 0)
-        self.canvas.move(self.ball22Ob, -1,-1)
-        self.canvas.move(self.testball, self.moveDownLeft[0], self.moveDownLeft[1])
+        #allows two balls to go the same way
+        self.checkMoves2Bridge()
         
+        #moves each image every timer interval
+        self.canvas.move(self.ball11Ob, self.ball11ObcurrentMove[0], self.ball11ObcurrentMove[1])
+        self.canvas.move(self.ball12Ob, self.ball12ObcurrentMove[0], self.ball12ObcurrentMove[1])
+        self.canvas.move(self.ball21Ob, self.ball21ObcurrentMove[0], self.ball21ObcurrentMove[1])
+        self.canvas.move(self.ball22Ob, self.ball22ObcurrentMove[0], self.ball22ObcurrentMove[1])
+    
+    #updates the speed up the simulation when the slider is moved        
     def onScale(self, value):
         self.msecs = int(float(value))
 
