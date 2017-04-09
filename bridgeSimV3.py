@@ -112,6 +112,16 @@ class BridgeSim(ttk.Frame):
         #note that the .grid at the end places it onto the GUI
         self.s = ttk.Scale(self, command=self.onScale,orient=HORIZONTAL, length=200, from_=1, to=300).grid(column=1,row=2)
         
+        self.progTypeFlag = IntVar()
+        
+        #radio button to control type of protocol used by program
+        self.r1 = Radiobutton(self, text="One Person on Bridge", variable=self.progTypeFlag, value=1)
+        self.r1.grid(column=1, row=5)
+        self.r2 = Radiobutton(self, text="More than One if Same Way", variable=self.progTypeFlag, value=0)
+        self.r2.grid(column=1, row=6)
+        
+        
+        
     #Starts simulation
     def onStart(self):
         self.loop = 1
@@ -448,11 +458,13 @@ class BridgeSim(ttk.Frame):
 
     #called by timer repeatedly
     def drawNext(self):
-        #regular 1 at a time checker
-        #self.checkMoves()
         
-        #allows two balls to go the same way
-        self.checkMoves2Bridge()
+        if self.progTypeFlag.get():
+            #regular 1 at a time checker
+            self.checkMoves()
+        else:
+            #allows two balls to go the same way
+            self.checkMoves2Bridge()
         
         #moves each image every timer interval
         self.canvas.move(self.ball11Ob, self.ball11ObcurrentMove[0], self.ball11ObcurrentMove[1])
