@@ -39,10 +39,10 @@ class BridgeSim(ttk.Frame):
         #self.grid()
         #sets class variable for the speed that can be used by any method
 
-        self.speed1 = 5
+        self.speed1 = 7
         self.speed2 = 5
-        self.speed3 = 5
-        self.speed4 = 5
+        self.speed3 = 3
+        self.speed4 = 1
         self.drawCounter = 1
         self.msecs = msecs
         self.objects = []
@@ -59,7 +59,7 @@ class BridgeSim(ttk.Frame):
         bridgeImage = PhotoImage(file='bridge.gif')
         ball2Image = PhotoImage(file='ball2.gif')
         
-        #needed so that images arent garbage collected (? stupid)
+        #needed so that images arent garbage collected 
         canvas.background = bridgeImage
         canvas.b = ball1Image
         canvas.bb = ball2Image
@@ -86,8 +86,8 @@ class BridgeSim(ttk.Frame):
         #keeps track of direction and images crossing bridge
         self.leftOnBridge = []
         self.rightOnBridge = []
-        self.waitingRight = []
-        self.waitingLeft = []
+        #keeps track of waiting order
+        self.waiting = []
         
         #list to keep  track of movement order on the chart
         self.order = [self.moveUp, self.moveDownRight, self.moveRight, self.moveUpRight, self.moveDown, self.moveUpLeft, self.moveLeft, self.moveDownLeft]
@@ -177,9 +177,13 @@ class BridgeSim(ttk.Frame):
                 self.ball22ObcurrentMove = self.order[self.ball22ObIND]
         
         if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 141:
-               
-            if len(self.leftOnBridge) < 1:
+            
+            #checks if bridge is clear and object about to cross is first in line
+            #moves ball or sets it still
+            if len(self.leftOnBridge) < 1 and (len(self.waiting) == 0 or currentObj == self.waiting[0]):
                 self.rightOnBridge.append(currentObj)
+                if currentObj in self.waiting:
+                    self.waiting.remove(currentObj)
                 
                 if currentObj == self.ball11Ob:
                     self.ball11ObIND += 1
@@ -196,12 +200,20 @@ class BridgeSim(ttk.Frame):
             else:
                 if currentObj == self.ball11Ob:
                     self.ball11ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball12Ob:
                     self.ball12ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball21Ob:
                     self.ball21ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball22Ob:
                     self.ball22ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
             
         if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 257:
             self.rightOnBridge.remove(currentObj)
@@ -253,8 +265,10 @@ class BridgeSim(ttk.Frame):
             
         if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 257:
 
-            if len(self.rightOnBridge) < 1:
+            if len(self.rightOnBridge) < 1 and (len(self.waiting) == 0 or currentObj == self.waiting[0]):
                 self.leftOnBridge.append(currentObj)
+                if currentObj in self.waiting:
+                    self.waiting.remove(currentObj)
                 
                 if currentObj == self.ball11Ob:
                     self.ball11ObIND += 1
@@ -271,12 +285,20 @@ class BridgeSim(ttk.Frame):
             else:
                 if currentObj == self.ball11Ob:
                     self.ball11ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball12Ob:
                     self.ball12ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball21Ob:
                     self.ball21ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball22Ob:
                     self.ball22ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                     
         if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 141:
             self.leftOnBridge.remove(currentObj)
@@ -330,11 +352,15 @@ class BridgeSim(ttk.Frame):
         if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 141:
 
                 
-            if len(self.rightOnBridge) + len(self.leftOnBridge) < 1:
+            if (len(self.rightOnBridge) + len(self.leftOnBridge) < 1) and (len(self.waiting) == 0 or currentObj == self.waiting[0]):
+                #if statement not needed, always goes else
                 if self.rightOnBridge.__contains__(currentObj):
                     print("wait")
                 else:
                     self.rightOnBridge.append(currentObj)
+                    if currentObj in self.waiting:
+                        self.waiting.remove(currentObj)
+                    #print("added")
                 
                 if currentObj == self.ball11Ob:
                     self.ball11ObIND += 1
@@ -351,12 +377,20 @@ class BridgeSim(ttk.Frame):
             else:
                 if currentObj == self.ball11Ob:
                     self.ball11ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball12Ob:
                     self.ball12ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball21Ob:
                     self.ball21ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball22Ob:
                     self.ball22ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
             
         if self.canvas.coords(currentObj)[1] - 107 < .7 and self.canvas.coords(currentObj)[1] - 107 > 0 and self.canvas.coords(currentObj)[0] == 257:
             self.rightOnBridge.remove(currentObj)
@@ -407,12 +441,15 @@ class BridgeSim(ttk.Frame):
                 self.ball22ObcurrentMove = self.order[self.ball22ObIND]
             
         if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 257:
-
-            if len(self.leftOnBridge) + len(self.rightOnBridge) < 1:
+            
+            if (len(self.leftOnBridge) + len(self.rightOnBridge) < 1) and (len(self.waiting) == 0 or currentObj == self.waiting[0]):
                 if self.leftOnBridge.__contains__(currentObj):
                     print("wait")
                 else:
                     self.leftOnBridge.append(currentObj)
+                    if currentObj in self.waiting:
+                        self.waiting.remove(currentObj)
+                    #print("addedL")
                 
                 if currentObj == self.ball11Ob:
                     self.ball11ObIND += 1
@@ -429,12 +466,20 @@ class BridgeSim(ttk.Frame):
             else:
                 if currentObj == self.ball11Ob:
                     self.ball11ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball12Ob:
                     self.ball12ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball21Ob:
                     self.ball21ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                 elif currentObj == self.ball22Ob:
                     self.ball22ObcurrentMove = (0,0)
+                    if currentObj not in self.waiting:
+                        self.waiting.append(currentObj)
                     
         if self.canvas.coords(currentObj)[1] - 111 < .2 and self.canvas.coords(currentObj)[1] - 111 > 0 and self.canvas.coords(currentObj)[0] == 141:
             self.leftOnBridge.remove(currentObj)
@@ -516,7 +561,8 @@ class BridgeSim(ttk.Frame):
                         
             self.canvas.move(self.ball22Ob, self.ball22ObcurrentMove[0], self.ball22ObcurrentMove[1])  
             
-        print(self.speed1,self.speed2,self.speed3,self.speed4)
+        #print(self.speed1,self.speed2,self.speed3,self.speed4)
+        #print(self.waiting)
         
         if self.drawCounter == 100:
             self.drawCounter = 1
