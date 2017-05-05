@@ -8,17 +8,15 @@ Two towns A and B are connected with a bridge. Suppose there are four people and
 
 Design a GUI to display the movement of the people, so that the instructor can control the walking speed of the people and verify the protocol. Note that to receive full credit, you should provide instructions on how to compile and run your program, and your program should be well-documented.
 
-## Getting Started
-**_To be added_**
 
 ## Prerequisites
-**_To be added_**
+**Must have python 3 installed on computer (possibly 3.5)**
 
 ## Installing
-**_To be added_**
+**Download the submitted zipfile and extract it to its own folder. It should have 3 pictures, the program, and the readme**
 
 ## Running
-**_To be added_**
+**open the command prompt and type "python3 bridgeSimV3.py" or however you would normally run a python file**
 
 ## Authors
 * Tyler Hembrock: Thembro01
